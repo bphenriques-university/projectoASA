@@ -3,7 +3,6 @@
 #include <vector>
 #include <stack>
 
-std::stack<int> nodeStack;
 
 typedef struct node {
 	int index;
@@ -11,43 +10,50 @@ typedef struct node {
 	int value;
 } Node;
 
+std::stack<int> nodeStack;
+std::vector<std::vector<Node> > nodes;
+std::vector<std::vector<int> > adjacencias;
+int index = 0;
+
 void tarjanAlgorithm() {
-	nodeStack.push(5);
-	std::cout << "" << nodeStack.top() << std::endl;
+	for(int i = 0; i < adjacencias.size(); i++) {
+		strongConnect(i);
+	}
+
 }
 
 
 int main()
 {
     int N; // number of persons
-    int P; // number of shares
+    int P; // number of adjacencias
     
-    std::vector<std::vector<Node> > shares;
-    
-    std::cout << "[Number of Persons] [Number of shares]" << std::endl;
+    std::cout << "[Number of Persons] [Number of adjacencias]" << std::endl;
     //read N and read P;
     std::cin >> N >> P;
     
     //initialize the share vector equal to number of person
-    shares = std::vector<std::vector<Node> > (N);
+    nodes = std::vector<std::vector<Node> > (N);
 
     std::cout << "For each share: [Person a] [Person b]" << std::endl;
     //for each share, read
     for(int i = 0 ; i < P ; i++){
-		//person u shares what it receives with person v
+		//person u adjacencias what it receives with person v
 		int u, v;
 		std::cin >> u >> v;
 		Node node;
 		node.index = -1;
 		node.lowIndex = -1;
 		node.value = v;
-		shares[u-1].push_back(node);
+
+		nodes[u] = node;
+		adjacencias[u-1].push_back(v);
 	}
 	
 	//for each share, print
-	for(std::vector<std::vector<Node> >::size_type u = 0; u != shares.size(); u++) {
-		for(std::vector<Node>::size_type v = 0; v != shares[u].size(); v++) {
-			std::cout << "Person " << u+1 << " shares what it receives with person " << shares[u][v].value << std::endl;
+	for(std::vector<std::vector<Node> >::size_type u = 0; u != adjacencias.size(); u++) {
+		for(std::vector<Node>::size_type v = 0; v != adjacencias[u].size(); v++) {
+			std::cout << "Person " << u+1 << " adjacencias what it receives with person " << adjacencias[u][v] << std::endl;
 		}
 	}
 	

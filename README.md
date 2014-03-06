@@ -10,4 +10,4 @@ Portanto:
 2 . Número de Vértices do maior SCC
 3 . Nº de SCC's isolados (sem arcos para fora)
 
-//Teste commit
+http://en.wikipedia.org/wiki/Tarjan's_strongly_connected_components_algorithm
