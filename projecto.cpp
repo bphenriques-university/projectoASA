@@ -3,7 +3,7 @@
 #include <vector>
 #include <stack>
 
-static int index = 0;
+static int index = 1;
 
 class Node{
 	int _index;
@@ -13,12 +13,13 @@ class Node{
 	
 	public:
 		Node(int value){
+      _index = -1;
 			_lowIndex = -1;
 			_value = value;
 			_inStack = false;	
 		}
 		
-		inline setIndex() {_index = index++; }
+		inline void setup() {_index = index++; _lowIndex = _index; }
 		inline int getIndex() { return _index; }
 		inline int getLowIndex() { return _lowIndex; }
 		inline int getValue() { return _value; }
@@ -29,35 +30,54 @@ class Node{
 };
 
 std::stack<int> nodeStack;
+std::vector<Node*> nodes; //posicao 0 nao usada
+std::vector<std::vector<int> > adjacencias; //posicao 0 nao usada
 
-std::vector<Node*> nodes;
-std::vector<std::vector<int> > adjacencias;
+int numberOfSCC = 0;
+int sccMaxSize = 0;
+int numberOfIsolatedSCC = 0;
 
 void tarjanAlgorithm(int u) {
-	int vizinho;
-	Node* noVizinho;
-	Node* raiz = nodes[u];	
+	Node* raiz = nodes[u];
 
 	nodeStack.push(u);
 	nodes[u]->setInStackTrue();
-	nodes[u]->setIndex();
+	nodes[u]->setup();
 
-	for(std::vector<int>::size_type v = 1; v != adjacencias[u].size(); v++) {
-		vizinho = adjacencias[u][v];
-		noVizinho = nodes[u];
+	for(std::vector<int>::size_type v = 0; v < adjacencias[u].size(); v++) {
 
-		if(noVizinho->getLowIndex() == -1){
+		int vizinho = adjacencias[u][v];
+		Node* noVizinho = nodes[vizinho];
+
+		if(noVizinho->getIndex() == -1){
 			tarjanAlgorithm(vizinho);
-			noVizinho->setLowIndex(std::min(raiz[u]->getLowIndex(), noVizinho->getIndex();
+			raiz->setLowIndex(std::min(raiz->getLowIndex(), noVizinho->getLowIndex()));
 		}
 		else if (noVizinho->isInStack()){
-			noVizinho->setLowIndex = std::min(raiz->getLowIndex(), noVizinho->getIndex());
+			raiz->setLowIndex(std::min(raiz->getLowIndex(), noVizinho->getIndex()));
 		}
-
 	}
+  std::cout << raiz->getLowIndex() << " " << raiz->getIndex() << std::endl;
 
+	if(raiz->getLowIndex() == raiz->getIndex() ){
+		numberOfSCC++;
+		int currentSCCSize = 0;
+    int poppedNodeIndex = 0;
+    Node* node = NULL;
+		do {
+      poppedNodeIndex = nodeStack.top();
+      nodeStack.pop();
+      nodes[poppedNodeIndex]->setInStackFalse();
+			node = nodes[poppedNodeIndex];
+			currentSCCSize++;
+		} while(raiz->getIndex() != node->getIndex());
 
-
+		sccMaxSize = std::max(sccMaxSize, currentSCCSize);
+    /*
+		if(adjacencias[poppedNodeIndex][nodeStack.top()] == NULL){
+			numberOfIsolatedSCC++;
+		}*/
+	}
 }
 
 
@@ -92,10 +112,14 @@ int main(){
 	}
 	
 	for(std::vector<int>::size_type u = 1; u != nodes.size(); u++) {
-			if(nodes[u]->getIndex() == -1){
+			if(nodes[u]->getIndex() != -1){
 				continue;
 			}
+
 			tarjanAlgorithm(u);
 	}
-    return 0;
+  printf("%d\n", numberOfSCC);
+  printf("%d\n", sccMaxSize);
+  printf("%d\n", numberOfIsolatedSCC);
+  return 0;
 } 
