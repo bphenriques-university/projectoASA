@@ -9,18 +9,23 @@ class Node{
 	int _index;
 	int _lowIndex;
 	int _value;
+	bool _inStack;
 	
 	public:
 		Node(int value){
-			_index = index++;
 			_lowIndex = -1;
 			_value = value;
+			_inStack = false;	
 		}
 		
-		int getIndex() { return _index; }
-		int getLowIndex() { return _lowIndex; }
-		int getValue() { return _value; }
-		
+		inline setIndex() {_index = index++; }
+		inline int getIndex() { return _index; }
+		inline int getLowIndex() { return _lowIndex; }
+		inline int getValue() { return _value; }
+		inline void setLowIndex(int index) { _lowIndex = index ; }
+		inline void setInStackTrue() {_inStack = true;}
+		inline void setInStackFalse() {_inStack = false;}
+		inline bool isInStack() { return _inStack;}
 };
 
 std::stack<int> nodeStack;
@@ -29,9 +34,29 @@ std::vector<Node*> nodes;
 std::vector<std::vector<int> > adjacencias;
 
 void tarjanAlgorithm(int u) {
-	//for(unsigned int i = 0; i < adjacencias.size(); i++) {
-	//	strongConnect(i);
-	//}
+	int vizinho;
+	Node* noVizinho;
+	Node* raiz = nodes[u];	
+
+	nodeStack.push(u);
+	nodes[u]->setInStackTrue();
+	nodes[u]->setIndex();
+
+	for(std::vector<int>::size_type v = 1; v != adjacencias[u].size(); v++) {
+		vizinho = adjacencias[u][v];
+		noVizinho = nodes[u];
+
+		if(noVizinho->getLowIndex() == -1){
+			tarjanAlgorithm(vizinho);
+			noVizinho->setLowIndex(std::min(raiz[u]->getLowIndex(), noVizinho->getIndex();
+		}
+		else if (noVizinho->isInStack()){
+			noVizinho->setLowIndex = std::min(raiz->getLowIndex(), noVizinho->getIndex());
+		}
+
+	}
+
+
 
 }
 
