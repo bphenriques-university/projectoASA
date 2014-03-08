@@ -28,7 +28,7 @@ std::stack<int> nodeStack;
 std::vector<Node*> nodes;
 std::vector<std::vector<int> > adjacencias;
 
-void tarjanAlgorithm() {
+void tarjanAlgorithm(int u) {
 	//for(unsigned int i = 0; i < adjacencias.size(); i++) {
 	//	strongConnect(i);
 	//}
@@ -67,10 +67,10 @@ int main(){
 	}
 	
 	for(std::vector<int>::size_type u = 1; u != nodes.size(); u++) {
-			std::cout << "Person " << u << " index: " << nodes[u]->getIndex() << " lowIndex: " << nodes[u]->getLowIndex() << " value: " << nodes[u]->getValue() << std::endl;
+			if(nodes[u]->getIndex() == -1){
+				continue;
+			}
+			tarjanAlgorithm(u);
 	}
-	
-	
-	tarjanAlgorithm();
     return 0;
 } 
