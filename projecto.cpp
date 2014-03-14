@@ -3,7 +3,7 @@
 #include <vector>
 #include <stack>
 
-#define UNDEFINED -1
+#define UNDEFINED 0
 
 int global_index = 0;
 int global_scc_id = 0;
@@ -13,6 +13,16 @@ class Node{
 	int _lowIndex;
 	int _scc_id;
 	bool _inStack;
+	bool _outside_current_scc;
+		
+	/* enquanto estou a fazer dfs marco todos os nós como fora do scc actual */
+	/* se depois de fazer um novo scc ainda haver nós fora do scc actual entao o scc anterior tem arcos para fora */
+	/* faço reset da flag e o ciclo recomeça */
+	
+	/* i.e. para cada nó visitado meto _outside_current_scc a true;
+	 * quando faço pop na pilha meto a false
+	 * se ainda houver nós a true temos um scc que nao esta isolado
+	 */
 	
 	public:
 		Node(){
@@ -30,9 +40,10 @@ class Node{
 		inline void setInStack(bool b) { _inStack = b;}
 		inline void setScc(int scc) { _scc_id = scc;}
 		inline bool isInStack() { return _inStack;}
+		
 };
 
-
+int last_rootNode_popped = 0;
 
 int numberOfSCC = 0;
 int sccMaxSize = 0;
@@ -42,8 +53,15 @@ std::stack<int> nodeStack;
 std::vector<Node*> nodes; //posicao 0 nao usada
 std::vector<std::vector<int> > adjacencias; //posicao 0 nao usada
 
-std::vector<int> raizes_scc_ambiguos;
 
+bool find(int u, int v){
+	for (std::vector<int>::size_type i = 0; i < adjacencias[u].size(); i++){
+		if(adjacencias[u][i] == v){
+			return true;
+		}
+	}
+	return false;
+}
 
 
 void strongconnect(int u) {
@@ -68,11 +86,13 @@ void strongconnect(int u) {
 		}
 	}
   
+  
 	if(raiz->getLowIndex() == raiz->getIndex() ){
 		numberOfSCC++;
 		int currentSCCSize = 0;
 		int poppedNodeIndex = 0;
 		Node* node = NULL;
+		int run_once = false;
 		std::cout << "--- popping ---" << std::endl;
 		do {
 			poppedNodeIndex = nodeStack.top();
@@ -82,37 +102,25 @@ void strongconnect(int u) {
 			node = nodes[poppedNodeIndex];
 			currentSCCSize++;
 			node->setScc(numberOfSCC);
+			
+			if(!run_once && find(poppedNodeIndex, last_rootNode_popped)){
+				std::cout << "!! found: " << poppedNodeIndex << " " << last_rootNode_popped << std::endl;
+				numberOfIsolatedSCC--;
+				run_once = true;
+			} 
+			
 		} while(raiz->getIndex() != node->getIndex());
+
+		last_rootNode_popped = poppedNodeIndex;
+		run_once = false;
+
 
 		node->setScc(numberOfSCC);
 		
 		sccMaxSize = std::max(sccMaxSize, currentSCCSize);
 	}
-	
-	//tracks sccs
-	if(adjacencias[u].size() > 1){
-		raizes_scc_ambiguos.push_back(u);
-	}
 }
 
-int verifica_scc_isolado(int raiz){
-	int id_scc = nodes[raiz]->getScc();
-	std::cout << "--- no a analisar se vai fora : " << raiz << "---\n";
-	
-	for(std::vector<int>::size_type v = 0; v < adjacencias[raiz].size(); v++) {
-		int vizinho = adjacencias[raiz][v];
-		Node* noVizinho = nodes[vizinho];
-		
-		std::cout << "Vizinho: " << vizinho << std::endl;
-		
-		if(noVizinho->getScc() != id_scc){
-				std::cout << "** Nao isolado**\n";
-				return -1;
-		}
-	}
-	
-	return 0;
-}
 
 
 int main(){
@@ -134,8 +142,6 @@ int main(){
 		int u, v;
 		scanf("%d %d", &u, &v);
 		
-		std::cout << u << " " << v << std::endl;
-		
 		adjacencias[u].push_back(v);
 	}
 	
@@ -144,6 +150,8 @@ int main(){
 		if (nodes[u]->getIndex() == UNDEFINED){
 			strongconnect(u);
 		}
+		
+		
 	}
 	
 	std::cout << "--- Scc associado ---" << std::endl; 
@@ -151,18 +159,11 @@ int main(){
 		std::cout << u << ": " << nodes[u]->getScc() << std::endl;
 	}
 	
-	numberOfIsolatedSCC = numberOfSCC;
-	
-	for(std::vector<int>::size_type u = 0; u != raizes_scc_ambiguos.size(); u++) {
-		if(verifica_scc_isolado(raizes_scc_ambiguos[u]) < 0){
-			numberOfIsolatedSCC--;
-		} 
-	}
 	
 	
 	
   printf("%d\n", numberOfSCC);
   printf("%d\n", sccMaxSize);
-  printf("%d\n", numberOfIsolatedSCC);
+  printf("%d\n", numberOfIsolatedSCC + numberOfSCC);
   return 0;
 } 
