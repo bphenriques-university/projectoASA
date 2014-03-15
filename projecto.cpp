@@ -8,21 +8,19 @@
 int global_index = 0;
 int global_scc_id = 0;
 
+class Edge{
+	public:
+		int _orig;
+		int _dest;
+		Edge(int o, int d) { _orig = o;  _dest = d;}
+};
+
 class Node{
 	int _index;
 	int _lowIndex;
 	int _scc_id;
 	bool _inStack;
 	bool _outside_current_scc;
-		
-	/* enquanto estou a fazer dfs marco todos os nós como fora do scc actual */
-	/* se depois de fazer um novo scc ainda haver nós fora do scc actual entao o scc anterior tem arcos para fora */
-	/* faço reset da flag e o ciclo recomeça */
-	
-	/* i.e. para cada nó visitado meto _outside_current_scc a true;
-	 * quando faço pop na pilha meto a false
-	 * se ainda houver nós a true temos um scc que nao esta isolado
-	 */
 	
 	public:
 		Node(){
@@ -43,8 +41,6 @@ class Node{
 		
 };
 
-int last_rootNode_popped = 0;
-
 int numberOfSCC = 0;
 int sccMaxSize = 0;
 int numberOfIsolatedSCC = 0;
@@ -53,6 +49,7 @@ std::stack<int> nodeStack;
 std::vector<Node*> nodes;
 std::vector<std::vector<int> > adjacencias;
 
+std::vector<Edge*> edges;
 
 bool find(int u, int v){
 	for (unsigned long i = 0; i < adjacencias[u].size(); i++){
@@ -92,7 +89,6 @@ void strongConnect(int u) {
 		int currentSCCSize = 0;
 		int poppedNodeIndex = 0;
 		Node* node = NULL;
-		bool run_once = false;
 		
 		#ifdef DEBUG
 		std::cout << "--- popping ---" << std::endl;
@@ -108,27 +104,50 @@ void strongConnect(int u) {
 			node = nodes[poppedNodeIndex];
 			currentSCCSize++;
 			node->setScc(numberOfSCC);
-			
-			if(!run_once && find(poppedNodeIndex, last_rootNode_popped)){
-				#ifdef DEBUG
-				std::cout << "!! found: " << poppedNodeIndex << " " << last_rootNode_popped << std::endl;
-				#endif
-				numberOfIsolatedSCC--;
-				run_once = true;
-			}
+
 		} while(raiz->getIndex() != node->getIndex());
-
-		last_rootNode_popped = poppedNodeIndex;
-		run_once = false;
-
-
 		node->setScc(numberOfSCC);
 		
 		sccMaxSize = std::max(sccMaxSize, currentSCCSize);
 	}
 }
 
+int countIsolatedSCC(int num_scc) {
+	std::vector<bool> boolScc (num_scc, false);
+	
+	int count_not_isolated = 0;
+	for(unsigned int i = 0; i < edges.size() ; i++) {
+	
+		int orig = edges[i]->_orig;
+		int dest = edges[i]->_dest;
+		
+		int orig_scc = nodes[orig]->getScc();
+		int dest_scc = nodes[dest]->getScc();
+		
+		#ifdef DEBUG
+		std::cout << "orig: " << orig << " dest: " << dest << std::endl;
+		#endif
+		
+		if(boolScc[orig_scc] == true){
+			#ifdef DEBUG
+			std::cout << "already checked this SCC..." << std::endl;
+			#endif
+			continue;
+		}
+		
+		if(orig_scc != dest_scc){
+			#ifdef DEBUG
+			std::cout << "Not isolated!" << std::endl;
+			#endif
+		
+			boolScc[orig_scc] = true;
+			count_not_isolated++;
+		}
+	}
 
+	return num_scc - count_not_isolated;
+	
+}
 
 int main() {
 	int N, P; // number of persons number of shares link
@@ -145,7 +164,6 @@ int main() {
 	}
 	
   adjacencias = std::vector<std::vector<int> > (N+1);
-	
    
   //for each share, read
   for(int i = 0 ; i < P ; i++) {
@@ -156,6 +174,7 @@ int main() {
 		}
 
 		adjacencias[u].push_back(v);
+		edges.push_back(new Edge(u, v));
 	}
 	
 		
@@ -164,6 +183,8 @@ int main() {
 			strongConnect(u);
 		}
 	}
+	
+	numberOfIsolatedSCC = countIsolatedSCC(numberOfSCC);
 	
 	#ifdef DEBUG
 	std::cout << "--- Scc associado ---" << std::endl; 
@@ -174,6 +195,6 @@ int main() {
 	
   printf("%d\n", numberOfSCC);
   printf("%d\n", sccMaxSize);
-  printf("%d\n", numberOfIsolatedSCC + numberOfSCC);
+  printf("%d\n", numberOfIsolatedSCC);
   return 0;
 } 
