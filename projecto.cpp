@@ -118,7 +118,7 @@ void strongConnect(int u, int father) {
 			node->setScc(numberOfSCC);
 		} while(raiz->getIndex() != node->getIndex());
 
-		if(!nodeStack.empty() && nodes[fatherNode]->checkedIsolation == false) {
+		if(nodeStack.size() > 1 && nodes[fatherNode]->checkedIsolation == false) {
 			std::cout << "Node with root " << fatherNode <<" is not isolated!" << std::endl;
 			nodes[fatherNode]->checkedIsolation = true;
 			numberOfIsolatedSCC--;
