@@ -45,6 +45,7 @@ class Node{
 
 int last_rootNode_popped = 0;
 bool poppedNodes = false;
+bool phantomSCC = false; // a phantom scc is an scc that is processed but in which all of its nodes aren't in the stack
 
 int numberOfSCC = 0;
 int sccMaxSize = 0;
@@ -84,7 +85,6 @@ void strongConnect(int u, int father) {
 		Node* noVizinho = nodes[vizinho];
 
 		if(noVizinho->getIndex() == UNDEFINED) {
-			fatherNode = u;
 			strongConnect(vizinho, u);
 			raiz->setLowIndex(std::min(raiz->getLowIndex(), noVizinho->getLowIndex()));
 		}
@@ -118,10 +118,15 @@ void strongConnect(int u, int father) {
 			node->setScc(numberOfSCC);
 		} while(raiz->getIndex() != node->getIndex());
 
-		if(nodeStack.size() > 1 && nodes[fatherNode]->checkedIsolation == false) {
-			std::cout << "Node with root " << fatherNode <<" is not isolated!" << std::endl;
+		//aqui dizemos que o no' pai (se ainda estiver na stack) nao e' isolado
+		if((nodeStack.size() >= 1 && nodes[fatherNode]->checkedIsolation == false) || (phantomSCC && nodeStack.empty())) {
+			std::cout << "SCC with node " << fatherNode <<" is not isolated!" << std::endl;
 			nodes[fatherNode]->checkedIsolation = true;
 			numberOfIsolatedSCC--;
+		}
+
+		if(nodeStack.empty()) {
+			phantomSCC = true;
 		}
 
 		node->setScc(numberOfSCC);
@@ -163,6 +168,7 @@ int main() {
 	for(unsigned long u = 1; u != nodes.size(); u++) {
 		if (nodes[u]->getIndex() == UNDEFINED){
 			strongConnect(u, -1);
+			phantomSCC = false;
 		}
 	}
 	
