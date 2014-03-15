@@ -3,7 +3,7 @@
 #include <vector>
 #include <stack>
 
-#define UNDEFINED 0
+#define UNDEFINED -1
 
 int global_index = 0;
 int global_scc_id = 0;
@@ -50,12 +50,12 @@ int sccMaxSize = 0;
 int numberOfIsolatedSCC = 0;
 
 std::stack<int> nodeStack;
-std::vector<Node*> nodes; //posicao 0 nao usada
-std::vector<std::vector<int> > adjacencias; //posicao 0 nao usada
+std::vector<Node*> nodes;
+std::vector<std::vector<int> > adjacencias;
 
 
 bool find(int u, int v){
-	for (std::vector<int>::size_type i = 0; i < adjacencias[u].size(); i++){
+	for (unsigned long i = 0; i < adjacencias[u].size(); i++){
 		if(adjacencias[u][i] == v){
 			return true;
 		}
@@ -64,7 +64,7 @@ bool find(int u, int v){
 }
 
 
-void strongconnect(int u) {
+void strongConnect(int u) {
 	Node* raiz = nodes[u];
 
 	raiz->setup();
@@ -72,13 +72,13 @@ void strongconnect(int u) {
 	raiz->setInStack(true);
 	
 
-	for(std::vector<int>::size_type v = 0; v < adjacencias[u].size(); v++) {
+	for(unsigned long v = 0; v < adjacencias[u].size(); v++) {
 
 		int vizinho = adjacencias[u][v];
 		Node* noVizinho = nodes[vizinho];
 
 		if(noVizinho->getIndex() == UNDEFINED){
-			strongconnect(vizinho);
+			strongConnect(vizinho);
 			raiz->setLowIndex(std::min(raiz->getLowIndex(), noVizinho->getLowIndex()));
 		}
 		else if (noVizinho->isInStack()){
@@ -92,11 +92,17 @@ void strongconnect(int u) {
 		int currentSCCSize = 0;
 		int poppedNodeIndex = 0;
 		Node* node = NULL;
-		int run_once = false;
+		bool run_once = false;
+		
+		#ifdef DEBUG
 		std::cout << "--- popping ---" << std::endl;
+		#endif
+
 		do {
 			poppedNodeIndex = nodeStack.top();
-			std::cout << poppedNodeIndex << std::endl;
+			#ifdef DEBUG
+			std::cout << "popped: " << poppedNodeIndex << std::endl;
+			#endif
 			nodeStack.pop();
 			nodes[poppedNodeIndex]->setInStack(false);
 			node = nodes[poppedNodeIndex];
@@ -104,11 +110,12 @@ void strongconnect(int u) {
 			node->setScc(numberOfSCC);
 			
 			if(!run_once && find(poppedNodeIndex, last_rootNode_popped)){
+				#ifdef DEBUG
 				std::cout << "!! found: " << poppedNodeIndex << " " << last_rootNode_popped << std::endl;
+				#endif
 				numberOfIsolatedSCC--;
 				run_once = true;
-			} 
-			
+			}
 		} while(raiz->getIndex() != node->getIndex());
 
 		last_rootNode_popped = poppedNodeIndex;
@@ -123,44 +130,47 @@ void strongconnect(int u) {
 
 
 
-int main(){
-    int N, P; // number of persons number of shares link
-    
-    //read N and read P;
-    scanf("%d %d", &N, &P);
+int main() {
+	int N, P; // number of persons number of shares link
+	int scanRes = 0;
+  //read N and read P;
+  scanRes = scanf("%d %d", &N, &P);
+  if(scanRes <= 0 && scanRes != EOF) {
+			std::cout << "Error reading from standard input." << std::endl;
+		}
 
-    //initialize the shared vector equal to number of person
-    for(int i = 0; i < N+1 ; i++){
+  //initialize the shared vector equal to number of person
+	for(int i = 0; i < N+1 ; i++) {
 		nodes.push_back(new Node());
 	}
 	
-    adjacencias = std::vector<std::vector<int> > (N+1);
+  adjacencias = std::vector<std::vector<int> > (N+1);
 	
    
-    //for each share, read
-    for(int i = 0 ; i < P ; i++){
-		int u, v;
-		scanf("%d %d", &u, &v);
-		
+  //for each share, read
+  for(int i = 0 ; i < P ; i++) {
+  	int u, v;
+		scanRes = scanf("%d %d", &u, &v);
+		if(scanRes <= 0 && scanRes != EOF) {
+			std::cout << "Error reading from standard input." << std::endl;
+		}
+
 		adjacencias[u].push_back(v);
 	}
 	
 		
-	for(std::vector<int>::size_type u = 1; u != nodes.size(); u++) {
+	for(unsigned long u = 1; u != nodes.size(); u++) {
 		if (nodes[u]->getIndex() == UNDEFINED){
-			strongconnect(u);
+			strongConnect(u);
 		}
-		
-		
 	}
 	
+	#ifdef DEBUG
 	std::cout << "--- Scc associado ---" << std::endl; 
-	for(std::vector<int>::size_type u = 1; u != nodes.size(); u++) {
+	for(unsigned long u = 1; u != nodes.size(); u++) {
 		std::cout << u << ": " << nodes[u]->getScc() << std::endl;
 	}
-	
-	
-	
+	#endif
 	
   printf("%d\n", numberOfSCC);
   printf("%d\n", sccMaxSize);

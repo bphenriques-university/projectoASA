@@ -5,6 +5,11 @@ CXX = g++
 CXXFLAGS = -O3 -ansi -Wall
 LDFLAGS = -lm       # put linker settings here
 
+all: $(FILE)
+
+debug: CXX += -DDEBUG -g
+debug: $(FILE)
+
 $(FILE): $(OBJECTS)
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $(OBJECTS)
 
