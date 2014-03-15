@@ -1,0 +1,1 @@
+echo "***** IN *****" ; cat testsprof/t04.in ; echo "***** OUT *****" ; ./projecto.exe < testsprof/t04.in ; echo "***** EXPECTED *****" ; cat testsprof/t04.out
