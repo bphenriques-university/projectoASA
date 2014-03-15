@@ -31,6 +31,7 @@ class Node{
 			_scc_id = UNDEFINED;
 			_inStack = false;
 		}
+		bool checkedIsolation = false;
 		
 		inline void setup() { _index = global_index; _lowIndex = _index; global_index++; }
 		inline int getIndex() { return _index; }
@@ -40,10 +41,10 @@ class Node{
 		inline void setInStack(bool b) { _inStack = b;}
 		inline void setScc(int scc) { _scc_id = scc;}
 		inline bool isInStack() { return _inStack;}
-		
 };
 
 int last_rootNode_popped = 0;
+bool poppedNodes = false;
 
 int numberOfSCC = 0;
 int sccMaxSize = 0;
@@ -64,10 +65,15 @@ bool find(int u, int v){
 }
 
 
-void strongConnect(int u) {
+void strongConnect(int u, int father) {
+	int fatherNode = father;
 	Node* raiz = nodes[u];
+	int lastConnectorNode = -1; //se o id ao fazer pop da pilha nunca chegar a este id entao o scc e' isolado
 
 	raiz->setup();
+	if(!nodeStack.empty()) {
+		lastConnectorNode = nodeStack.top();
+	}
 	nodeStack.push(u);
 	raiz->setInStack(true);
 	
@@ -77,8 +83,9 @@ void strongConnect(int u) {
 		int vizinho = adjacencias[u][v];
 		Node* noVizinho = nodes[vizinho];
 
-		if(noVizinho->getIndex() == UNDEFINED){
-			strongConnect(vizinho);
+		if(noVizinho->getIndex() == UNDEFINED) {
+			fatherNode = u;
+			strongConnect(vizinho, u);
 			raiz->setLowIndex(std::min(raiz->getLowIndex(), noVizinho->getLowIndex()));
 		}
 		else if (noVizinho->isInStack()){
@@ -87,12 +94,11 @@ void strongConnect(int u) {
 	}
   
   
-	if(raiz->getLowIndex() == raiz->getIndex() ){
+	if(raiz->getLowIndex() == raiz->getIndex()) {
 		numberOfSCC++;
 		int currentSCCSize = 0;
 		int poppedNodeIndex = 0;
 		Node* node = NULL;
-		bool run_once = false;
 		
 		#ifdef DEBUG
 		std::cout << "--- popping ---" << std::endl;
@@ -103,27 +109,22 @@ void strongConnect(int u) {
 			#ifdef DEBUG
 			std::cout << "popped: " << poppedNodeIndex << std::endl;
 			#endif
+
 			nodeStack.pop();
+			
 			nodes[poppedNodeIndex]->setInStack(false);
 			node = nodes[poppedNodeIndex];
 			currentSCCSize++;
 			node->setScc(numberOfSCC);
-			
-			if(!run_once && find(poppedNodeIndex, last_rootNode_popped)){
-				#ifdef DEBUG
-				std::cout << "!! found: " << poppedNodeIndex << " " << last_rootNode_popped << std::endl;
-				#endif
-				numberOfIsolatedSCC--;
-				run_once = true;
-			}
 		} while(raiz->getIndex() != node->getIndex());
 
-		last_rootNode_popped = poppedNodeIndex;
-		run_once = false;
-
+		if(!nodeStack.empty() && nodes[fatherNode]->checkedIsolation == false) {
+			std::cout << "Node with root " << fatherNode <<" is not isolated!" << std::endl;
+			nodes[fatherNode]->checkedIsolation = true;
+			numberOfIsolatedSCC--;
+		}
 
 		node->setScc(numberOfSCC);
-		
 		sccMaxSize = std::max(sccMaxSize, currentSCCSize);
 	}
 }
@@ -161,7 +162,7 @@ int main() {
 		
 	for(unsigned long u = 1; u != nodes.size(); u++) {
 		if (nodes[u]->getIndex() == UNDEFINED){
-			strongConnect(u);
+			strongConnect(u, -1);
 		}
 	}
 	
@@ -174,6 +175,6 @@ int main() {
 	
   printf("%d\n", numberOfSCC);
   printf("%d\n", sccMaxSize);
-  printf("%d\n", numberOfIsolatedSCC + numberOfSCC);
+  printf("%d\n", numberOfSCC + numberOfIsolatedSCC);
   return 0;
 } 
