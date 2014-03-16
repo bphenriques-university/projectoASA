@@ -99,6 +99,7 @@ void strongConnect(int u, int father) {
 		int currentSCCSize = 0;
 		int poppedNodeIndex = 0;
 		Node* node = NULL;
+		int nPops = 0;
 		
 		#ifdef DEBUG
 		std::cout << "--- popping ---" << std::endl;
@@ -111,7 +112,7 @@ void strongConnect(int u, int father) {
 			#endif
 
 			nodeStack.pop();
-			
+			nPops++;
 			nodes[poppedNodeIndex]->setInStack(false);
 			node = nodes[poppedNodeIndex];
 			currentSCCSize++;
@@ -119,7 +120,7 @@ void strongConnect(int u, int father) {
 		} while(raiz->getIndex() != node->getIndex());
 
 		//aqui dizemos que o no' pai (se ainda estiver na stack) nao e' isolado
-		if((nodeStack.size() >= 1 && nodes[fatherNode]->checkedIsolation == false) || (phantomSCC && nodeStack.empty())) {
+		if((!nodeStack.empty() && nodes[fatherNode]->checkedIsolation == false) || (phantomSCC && nodeStack.empty()) || (fatherNode != -1 && nPops == 1 && !adjacencias[u].empty())) {
 			std::cout << "SCC with node " << fatherNode <<" is not isolated!" << std::endl;
 			nodes[fatherNode]->checkedIsolation = true;
 			numberOfIsolatedSCC--;
