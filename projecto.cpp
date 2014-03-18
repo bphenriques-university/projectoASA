@@ -112,12 +112,9 @@ void strongConnect(int u) {
 
 int countIsolatedSCC() {
 	std::vector<bool> scc_checked (numberOfSCC, false);
-	int count_not_isolated = numberOfSCC;
+	int count_isolated = numberOfSCC;
 	
-	//optimization in case numberSCC <<< numberNodes
-	int analysedSCC = numberOfSCC;
-	
-	for(size_t u = 1; u < adjacencias.size() && analysedSCC > 0; u++) {
+	for(size_t u = 1; u < adjacencias.size(); u++) {
 		int orig_scc = nodes[u]->getScc();
 		
 		if(scc_checked[orig_scc] == true){
@@ -138,13 +135,14 @@ int countIsolatedSCC() {
 				#endif
 				
 				scc_checked[orig_scc] = true;
-				analysedSCC--;
-				count_not_isolated--;
+				count_isolated--;
 				break;
 			}
 		}
 	}
-	return count_not_isolated;	
+	
+	
+	return count_isolated;	
 }
 
 /* ------------ MAIN FUNCTION -------------- */
