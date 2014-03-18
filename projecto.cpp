@@ -1,24 +1,24 @@
+/* Grupo 47 - Analise e Sintese de Algoritmos 2013/2014
+ * Frederico Sabino 73239
+ * Bruno Henriques 72913
+ */
+
 #include <iostream>
 #include <stdio.h>
 #include <vector>
 #include <stack>
 
 #define UNDEFINED -1
-/* ------------------------------- */
-/* ---------- GLOBAL IDS --------- */
+
+/* ---------- GLOBAL ID ---------- */
 int global_index = 0;
-int global_scc_id = 0;
-/* ------------------------------- */
 
-
-/* ------------------------------- */
 /* ---------- CLASS NODE --------- */
 class Node{
 	int _index;
 	int _lowIndex;
 	int _scc_id;
 	bool _inStack;
-	bool _outside_current_scc;
 	
 	public:
 		Node(){
@@ -29,17 +29,17 @@ class Node{
 		}
 		
 		inline void setup() { _index = global_index; _lowIndex = _index; global_index++; }
-		inline int getIndex() { return _index; }
-		inline int getLowIndex() { return _lowIndex; }
-		inline int getScc() { return _scc_id; }
+		inline int getIndex() const { return _index; }
+		inline int getLowIndex() const { return _lowIndex; }
+		inline int getScc() const { return _scc_id; }
 		inline void setLowIndex(int index) { _lowIndex = index ; }
 		inline void setInStack(bool b) { _inStack = b;}
 		inline void setScc(int scc) { _scc_id = scc;}
-		inline bool isInStack() { return _inStack;}	
+		inline bool isInStack() const { return _inStack;}	
 };
 
-/* ------------------------------- */
-/* ---------- VARIABLES --------- */
+/* ---------- GLOBAL VARIABLES --------- */
+
 int numberOfSCC = 0;
 int sccMaxSize = 0;
 int numberOfIsolatedSCC = 0;
@@ -48,12 +48,10 @@ std::stack<int> nodeStack;
 std::vector<Node*> nodes;
 std::vector<std::vector<int> > adjacencias;
 
-/* ------------------------------------ */
 /* ---------- STRONG CONNECT ---------- */
-/* Applies tarjan algorithm and paints 
- * each node with the associated SCC
- * `
- * @param = the node id to start
+/* Applies tarjan algorithm and paints each node with the associated SCC
+ * input: a node id to start a DFS
+ * output: none
 */
 
 void strongConnect(int u) {
@@ -63,7 +61,7 @@ void strongConnect(int u) {
 	nodeStack.push(u);
 	raiz->setInStack(true);
 
-	for(unsigned long v = 0; v < adjacencias[u].size(); v++) {
+	for(size_t v = 0; v < adjacencias[u].size(); v++) {
 		int vizinho = adjacencias[u][v];
 		Node* noVizinho = nodes[vizinho];
 
@@ -106,28 +104,27 @@ void strongConnect(int u) {
 	}
 }
 
-/* -------------------------------------- */
 /* ---------- COUNTISOLATEDSCC ---------- */
-/* for each link in the graph
- *	   if scc associated to the current origin link is flagged
- *			continue
- *
- * 	   else if the two nodes have different sccs
- *			flag the current scc
- *			increment scc_not_isolated by one
+/* For each SCC, count which ones have got a node that has a link to another SCC
+ * input: void
+ * output: number of SCC that don't have any link from within to another SCC
 */
 
 int countIsolatedSCC() {
 	std::vector<bool> scc_checked (numberOfSCC, false);
-	int count_not_isolated = 0;
-
-	for(unsigned int u = 1; u < adjacencias.size() ; u++) {
+	int count_not_isolated = numberOfSCC;
+	
+	//optimization in case numberSCC <<< numberNodes
+	int analysedSCC = numberOfSCC;
+	
+	for(size_t u = 1; u < adjacencias.size() && analysedSCC > 0; u++) {
 		int orig_scc = nodes[u]->getScc();
 		
 		if(scc_checked[orig_scc] == true){
 			continue;
-		}	
-		for(unsigned int v = 0; v < adjacencias[u].size() ; v++) {
+		}
+		
+		for(size_t v = 0; v < adjacencias[u].size() ; v++) {
 			int adjacente = adjacencias[u][v];
 			int dest_scc = nodes[adjacente]->getScc();
 			
@@ -139,27 +136,28 @@ int countIsolatedSCC() {
 				#ifdef DEBUG
 				std::cout << "Not isolated!" << std::endl;
 				#endif
+				
 				scc_checked[orig_scc] = true;
-				count_not_isolated++;
+				analysedSCC--;
+				count_not_isolated--;
 				break;
 			}
 		}
 	}
-	return numberOfSCC - count_not_isolated;	
+	return count_not_isolated;	
 }
 
-/* ----------------------------------------- */
 /* ------------ MAIN FUNCTION -------------- */
 int main() {
-	// N: number of nodes P: number of edges
 	int N, P; 
+	std::vector<bool> scc_checked (numberOfSCC, false);
   
 	int scanRes = scanf("%d %d", &N, &P);
-	if(scanRes <= 0 && scanRes != EOF) {
+	if(scanRes != 2 && scanRes != EOF) {
 		printf("%s\n", "Error reading from standard input.");
 	}
 
-	//initialize the shared vector equal to number of person
+	//initialization
 	for(int i = 0; i < N+1 ; i++) {
 		nodes.push_back(new Node());
 	}
@@ -169,28 +167,26 @@ int main() {
 	for(int i = 0 ; i < P ; i++) {
 		int u, v;
 		scanRes = scanf("%d %d", &u, &v);
-		if(scanRes <= 0 && scanRes != EOF) {
+		if(scanRes != 2 && scanRes != EOF) {
 			printf("%s\n", "Error reading from standard input.");
 		}
 		
-		//regist new node link
 		adjacencias[u].push_back(v);
 	}
 	
-	
-	//apply trajan algorithm to each node
-	for(unsigned long u = 1; u != nodes.size(); u++) {
+	//for every node, apply Tarjan algorithm
+	for(size_t u = 1; u != nodes.size(); u++) {
 		if (nodes[u]->getIndex() == UNDEFINED){
 			strongConnect(u);
 		}
 	}
 	
-	//After painting each node with each scc: count isolatedSCC
+	//for every SCC, count the number of isolated ones
 	numberOfIsolatedSCC = countIsolatedSCC();
 	
 	#ifdef DEBUG
 	std::cout << "--- Scc associado ---" << std::endl; 
-	for(unsigned long u = 1; u != nodes.size(); u++) {
+	for(size_t u = 1; u != nodes.size(); u++) {
 		std::cout << u << ": " << nodes[u]->getScc() << std::endl;
 	}
 	#endif
@@ -200,4 +196,4 @@ int main() {
 	printf("%d\n", numberOfIsolatedSCC);
   
   return 0;
-} 
+}
